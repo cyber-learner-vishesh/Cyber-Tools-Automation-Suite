@@ -1,0 +1,56 @@
+import argparse as argp
+import scapy.all as scpy
+import subprocess as sbp
+import os
+import sys
+import ipaddress
+
+def argument():
+    parser = argp.ArgumentParser()
+    parser.add_argument("-t" , "--Target" , dest="target_ip" , help="add target or range of target")
+    options = parser.parse_args()
+    
+    if options.target_ip:
+        try:
+            ip =ipaddress.ip_network(options.target_ip , strict=False)
+            return str(ip)
+        except:
+            print("[-] invalid ip address ")
+            sys.exit()
+    else:
+        print("enter a ipaddress")
+        sys.exit()
+
+def scan(ip_address):
+    arp_packet = scpy.ARP(pdst=ip_address)
+    broadcast_packet = scpy.Ether(dst="ff:ff:ff:ff:ff:ff")
+    sending_packet = broadcast_packet/arp_packet
+    answer_list = scpy.srp(sending_packet,timeout=1 ,iface="wlan0")[0]
+    answer_dict={}
+    for el in answer_list:
+        answer_dict[el.answer.psrc] = el.answer.hwsrc 
+
+    return(answer_dict)
+
+def printoutput(answer_dict):
+    print("\n" + "="*45)
+    print("{:^45}".format("Scan Results"))
+    print("="*45)
+    print("{:<20} {:<20}".format("IP Address", "MAC Address"))
+    print("-" * 45)
+    
+    for ip, mac in answer_dict.items():
+        print("{:<20} {:<20}".format(ip, mac))
+    
+    print("="*45)
+
+    
+
+if __name__ == '__main__':
+    if (os.geteuid()!= 0):
+        print("Error :: Permission denied :: Run with sudo ")
+        sys.exit()
+    else:
+        ip_add = argument()
+        dicts = scan(ip_add)
+        printoutput(dicts)
