@@ -1,0 +1,41 @@
+Project Documentation: ARP Network Scanner
+
+
+1. Overview
+The **ARP Network Scanner** is a network reconnaissance tool designed to discover active devices on a local area network (LAN)[cite: 1]. It operates by sending Address Resolution Protocol (ARP) requests to a specified IP address or subnet and capturing the responses to map IP addresses to their corresponding hardware (MAC) addresses[cite: 1].
+
+2. Technical Architecture
+The script is built using several core Python modules:
+*   **`argparse`**: Handles command-line argument parsing for target IP inputs[cite: 1].
+*   **`scapy.all`**: The engine used for packet crafting, sending, and receiving[cite: 1].
+*   **`ipaddress`**: Used to validate that the provided input is a legitimate IP or CIDR range[cite: 1].
+*   **`os` & `sys`**: Utilized for system-level checks, specifically ensuring the user has root privileges[cite: 1].
+
+3. Component Breakdown
+
+ A. Argument Parsing (`argument()` function)
+*   **Purpose**: To capture the user's target network range via the `-t` or `--Target` flags[cite: 1].
+*   **Validation**: It passes the input through `ipaddress.ip_network` to ensure the string is a valid network address[cite: 1].
+*   **Error Handling**: If the IP is invalid or missing, the script terminates with an error message[cite: 1].
+
+ B. The Scanning Engine (`scan()` function)
+*   **Packet Creation**: It crafts a dual-layer packet:
+    1.  **ARP Layer**: Sets the `pdst` (destination IP) to the target range[cite: 1].
+    2.  **Ethernet Layer**: Sets the `dst` (destination MAC) to `ff:ff:ff:ff:ff:ff` to ensure the packet is broadcasted to all devices in the segment[cite: 1].
+*   **Transmission**: Uses `scapy.srp()` (Send and Receive Packets at Layer 2) to dispatch the request over the `wlan0` interface[cite: 1].
+*   **Data Collection**: It iterates through the answered packets and extracts the `psrc` (Source IP) and `hwsrc` (Source MAC) into a dictionary[cite: 1].
+
+ C. Output Formatting (`printoutput()` function)
+*   Displays the gathered data in a clean, tabular format[cite: 1].
+*   Maps each discovered device with its **IP Address** and **MAC Address** for easy reading[cite: 1].
+
+4. Security & Permissions
+*   **Root Requirement**: Because the script interacts with Layer 2 (Data Link Layer) to send raw Ethernet frames, it requires administrative privileges[cite: 1].
+*   **Permission Check**: The `if __name__ == '__main__':` block uses `os.geteuid() != 0` to verify if the script is being run with `sudo`[cite: 1]. If not, it prevents execution to avoid runtime crashes[cite: 1].
+
+ 5. Summary of Execution Flow
+1.  **User Input**: User provides a target (e.g., `192.168.1.0/24`)[cite: 1].
+2.  **Privilege Check**: Script verifies it is running as root[cite: 1].
+3.  **Broadcast**: An ARP request is broadcasted across the network[cite: 1].
+4.  **Response**: Active devices send an ARP reply containing their MAC address[cite: 1].
+5.  **Display**: The script compiles these replies into a table for the user[cite: 1].
